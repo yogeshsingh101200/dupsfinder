@@ -131,14 +131,16 @@ void check(void)
             temp = travOut;
             while(travOut)
             {
-                int sno = 0;
+                int sno = 0, turn = 1;
                 travIn = travOut->next;
                 while(travIn)
                 {
                     if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                     {
                         ++sno;
-                        printf("%d. Duplicate of %s is at %s\n", sno, travOut->path, travIn->path);
+                        if (turn)
+                            printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
+                        printf(" %d) %s\n", sno, travIn->path);
                         ++totDuplicates;
                         temp->next = travIn->next;
                         free(travIn);
@@ -149,6 +151,7 @@ void check(void)
                         temp = travIn;
                         travIn = travIn->next;
                     }
+                    turn = 0;
                 }
                 travOut = travOut->next;
             }
