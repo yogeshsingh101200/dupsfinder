@@ -7,12 +7,13 @@ int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        printf("Usage: main <directory>");
-        return -1;
+        //printf("Usage: main <directory>");
+        //return -1;
+        argv[1] = "../Desktop";
     }
     
     // Stores directory path
-    char directory[strlen(argv[1] + 1)];
+    char directory[MAX_PATH];
     strcpy(directory, argv[1]);
 
     // Initializes hash table

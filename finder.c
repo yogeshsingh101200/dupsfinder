@@ -14,7 +14,7 @@
 typedef struct node
 {
     char path[MAX_PATH];
-    char file_hash[65];
+    char file_hash[HASH_LENGTH + 1];
     struct node* next;
 } node;
 
@@ -87,7 +87,7 @@ int search(char* path)
 bool load(char* path)
 {
     // Stores file hash
-    char file_hash[65];
+    char file_hash[HASH_LENGTH + 1];
 
     // Calculates sha256 hash of file
     int res = sha256_file(path, file_hash);
@@ -128,10 +128,10 @@ void check(void)
         if (hashtable[i])
         {
             travOut = hashtable[i];
-            temp = travOut;
             while(travOut)
             {
                 int sno = 0, turn = 1;
+                temp = travOut;
                 travIn = travOut->next;
                 while(travIn)
                 {
@@ -145,13 +145,13 @@ void check(void)
                         temp->next = travIn->next;
                         free(travIn);
                         travIn = temp->next;
+                        turn = 0;
                     }
                     else
                     {
                         temp = travIn;
                         travIn = travIn->next;
                     }
-                    turn = 0;
                 }
                 travOut = travOut->next;
             }
@@ -161,6 +161,7 @@ void check(void)
 
 unsigned int duplicates(void)
 {
+    // Returns the total no of duplicates found
     return totDuplicates;
 }
 

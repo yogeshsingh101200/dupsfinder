@@ -4,7 +4,7 @@
 #include <openssl/sha.h>
 #include <stdlib.h>
 
-int sha256_file(char *path, char outputBuffer[65])
+int sha512_file(char *path, char outputBuffer[65])
 {
     // Opens file from given path
     FILE *file = fopen(path, "rb");
@@ -15,13 +15,13 @@ int sha256_file(char *path, char outputBuffer[65])
     }
 
     // To store digest
-    unsigned char hash[SHA256_DIGEST_LENGTH];
+    unsigned char hash[SHA512_DIGEST_LENGTH];
     
-    // Intializes sha256 context structure
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
+    // Intializes sha512 context structure
+    SHA512_CTX sha512;
+    SHA512_Init(&sha512);
 
-    // To read chunks of data repeatedly and feed them to sha256 update to hash
+    // To read chunks of data repeatedly and feed them to sha512 update to hash
     const int bufSize = 32768;
     unsigned char *buffer = malloc(bufSize);
     int bytesRead = 0;
@@ -30,20 +30,20 @@ int sha256_file(char *path, char outputBuffer[65])
         fprintf(stderr, "Out of memory!\n");
         return 2;
     }
-    while ((bytesRead = fread(buffer, 1, bufSize, file)))
+    while((bytesRead = fread(buffer, 1, bufSize, file)))
     {
-        SHA256_Update(&sha256, buffer, bytesRead);
+        SHA512_Update(&sha512, buffer, bytesRead);
     }
 
     // Places message digest to hash
-    SHA256_Final(hash, &sha256);
+    SHA512_Final(hash, &sha512);
 
     // Store message digest in lowercase hexadecimal to outputbuffer
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    for(int i = 0; i < SHA512_DIGEST_LENGTH; i++)
     {
         sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
     }
-    outputBuffer[HASH_LENGTH - 1] = '\0';
+    outputBuffer[129] = '\0';
 
     // Closes file
     fclose(file);
