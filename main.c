@@ -7,9 +7,8 @@ int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        //printf("Usage: main <directory>");
-        //return -1;
-        argv[1] = "../Desktop";
+        printf("Usage: main <directory>");
+        return -1;
     }
     
     // Stores directory path
