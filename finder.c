@@ -36,7 +36,7 @@ unsigned int hash(const char *word)
     unsigned int hash = 0;
     for (int i = 0, n = strlen(word); i < n; ++i)
     {
-        hash = (hash << 2) ^ (tolower(word[i]));
+        hash = (hash << 2) ^ word[i];
     }
     return hash % N;
 }

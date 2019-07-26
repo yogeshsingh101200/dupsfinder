@@ -5,9 +5,10 @@
 
 int main(int argc, char* argv[])
 {
+    // Checks for correct usage
     if (argc != 2)
     {
-        printf("Usage: main <directory>");
+        printf("Usage: main <directory>\n");
         return -1;
     }
     
