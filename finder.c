@@ -32,17 +32,7 @@ void initialize(void)
     }
 }
 
-// Ref: https://www.reddit.com/r/cs50/comments/1x6vc8/pset6_trie_vs_hashtable/
-/*unsigned int hash(const char *word)
-{
-    unsigned int hash = 0;
-    for (int i = 0, n = strlen(word); i < n; ++i)
-    {
-        hash = (hash << 2) ^ word[i];
-    }
-    return hash % N;
-}*/
-
+// Returns index for hashtable for given size
 unsigned int hash(long size)
 {
     return size % N;
@@ -59,10 +49,7 @@ long size_of_file(char path[])
 
     // Handles unsuccessfull opening of file
     if (!file)
-    {
-        fprintf(stderr, "Unable to open a file\n");
         return -1;
-    }
 
     // Moves file pointer to end
     fseek(file, 0, SEEK_END);
@@ -171,11 +158,19 @@ bool load(char *path)
     // Find and store file size
     long size = size_of_file(path);
 
+    if (size == -1)
+        return false;
+
     // Getting hash out of file size
     unsigned int index = hash(size);
 
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
+    if (!file)
+    {
+        fprintf(stderr, "Not enough memory!\n");
+        return false;
+    }
 
     // Storing file info
     file->file_size = size;
@@ -229,6 +224,11 @@ void check(void)
                         if (!travOut->file_hash)
                         {
                             travOut->file_hash = malloc(HASH_LENGTH + 1);
+                            if (!travOut->file_hash)
+                            {
+                                fprintf(stderr, "Not enough memory!\n");
+                                return;
+                            }
                             resO = sha256_file(travOut->path, travOut->file_hash);
                             if (resO)
                             {
@@ -239,6 +239,11 @@ void check(void)
                         if (!travIn->file_hash)
                         {
                             travIn->file_hash = malloc(HASH_LENGTH + 1);
+                            if (!travIn->file_hash)
+                            {
+                                fprintf(stderr, "Not enough memory!\n");
+                                return;
+                            }
                             resI = sha256_file(travIn->path, travIn->file_hash);       
                             if (resI)
                                 fprintf(stderr, "Unable to compute file hash of %s!\n", travIn->path);
