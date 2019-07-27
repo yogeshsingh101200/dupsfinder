@@ -24,7 +24,10 @@ int main(int argc, char* argv[])
 
     // Checks for duplicate files
     check();
-    printf("\n\n Total no of duplicates: %u\n", duplicates());
+
+    // Stats
+    printf("\n\n Total no of duplicates: %u", duplicates());
+    printf("\n Total size taken by duplicate files: %lu Bytes", size_taken());
     
     // Unloads directory from memory
     unload();

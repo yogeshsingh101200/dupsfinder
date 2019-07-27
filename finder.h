@@ -23,8 +23,11 @@ bool load(char*);
 // Function to find duplicates
 void check(void);
 
-// Returns total no of duplicates find
+// Returns total no of duplicates found
 unsigned int duplicates();
+
+// Returns total size taken by duplicate files
+unsigned long size_taken();
 
 // Function to unload directory from memory
 void unload(void);

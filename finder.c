@@ -41,6 +41,9 @@ unsigned int hash(long size)
 // Tracks total no of duplicates
 unsigned int totDuplicates = 0;
 
+// Tracks total size taken by duplicates
+unsigned long sizeTaken = 0;
+
 // Returns total file size in bytes
 long size_of_file(char path[])
 {
@@ -257,6 +260,7 @@ void check(void)
                                     printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
                                 printf(" %d) %s\n", sno, travIn->path);
                                 ++totDuplicates;
+                                sizeTaken += travIn->file_size;
                                 temp->next = travIn->next;
                                 free(travIn);
                                 travIn = temp->next;
@@ -286,10 +290,16 @@ void check(void)
     }
 }
 
+// Returns total no of duplicates found
 unsigned int duplicates(void)
 {
-    // Returns the total no of duplicates found
     return totDuplicates;
+}
+
+// Returns total size taken by duplicates
+unsigned long size_taken(void)
+{
+    return sizeTaken;
 }
 
 void unload(void)
