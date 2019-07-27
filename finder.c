@@ -189,7 +189,7 @@ void check(void)
                         }
                         if (!resO && !resI)
                         {
-                            if (strcmp(travIn->file_hash, travIn->file_hash) == 0)
+                            if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                             {
                                 ++sno;
                                 if (turn)
