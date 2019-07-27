@@ -26,9 +26,6 @@ void check(void);
 // Returns total no of duplicates find
 unsigned int duplicates();
 
-// Returns the memory that will be available after removing duplicates
-long long size();
-
 // Function to unload directory from memory
 void unload(void);
 

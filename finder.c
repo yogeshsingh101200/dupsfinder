@@ -13,8 +13,9 @@
 // Structure of a node in hashtable
 typedef struct node
 {
+    long file_size;
     char path[MAX_PATH];
-    char file_hash[HASH_LENGTH + 1];
+    char* file_hash;
     struct node* next;
 } node;
 
@@ -31,7 +32,7 @@ void initialize(void)
 }
 
 // Ref: https://www.reddit.com/r/cs50/comments/1x6vc8/pset6_trie_vs_hashtable/
-unsigned int hash(const char *word)
+/*unsigned int hash(const char *word)
 {
     unsigned int hash = 0;
     for (int i = 0, n = strlen(word); i < n; ++i)
@@ -39,10 +40,35 @@ unsigned int hash(const char *word)
         hash = (hash << 2) ^ word[i];
     }
     return hash % N;
+}*/
+
+unsigned int hash(long size)
+{
+    return size % N;
 }
 
 // Tracks total no of duplicates
 unsigned int totDuplicates = 0;
+
+// Returns total file size in bytes
+long size_of_file(char path[])
+{
+    // Opens file in binary mode to read
+    FILE *file = fopen(path, "rb");
+
+    // Handles unsuccessfull opening of file
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open a file\n");
+        return -1;
+    }
+
+    // Moves file pointer to end
+    fseek(file, 0, SEEK_END);
+    
+    // Returns file size
+    return ftell(file);
+}
 
 int search(char* path)
 {
@@ -84,25 +110,21 @@ int search(char* path)
     return 0;
 }
 
-bool load(char* path)
+bool load(char *path)
 {
-    // Stores file hash
-    char file_hash[HASH_LENGTH + 1];
+    // Find and store file size
+    long size = size_of_file(path);
 
-    // Calculates sha256 hash of file
-    int res = sha256_file(path, file_hash);
-    if (res)
-        return false;
-
-    // Getting hash of file_hash
-    unsigned int index = hash(file_hash);
+    // Getting hash out of file size
+    unsigned int index = hash(size);
 
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
 
-    // Storing file info    
+    // Storing file info
+    file->file_size = size;
     strcpy(file->path, path);
-    strcpy(file->file_hash, file_hash);
+    file->file_hash = NULL;
     file->next = NULL;
 
     // For first file insertion
@@ -117,12 +139,22 @@ bool load(char* path)
         file->next = hashtable[index];
         hashtable[index] = file;
     }
+
     return true;
 }
 
 void check(void)
 {
-    node *travOut = NULL, *travIn = NULL, *temp = NULL;
+    // Pointer to traverse through the linked list
+    node *travOut = NULL;
+    
+    // Pointer to traverse through linked list while comparing to the node pointed by travOut
+    node *travIn = NULL;
+    
+    // Pointer to hold the previous node in the linked list
+    node *temp = NULL;
+
+    // Checking
     for (int i = 0; i < N; ++i)
     {
         if (hashtable[i])
@@ -135,17 +167,51 @@ void check(void)
                 travIn = travOut->next;
                 while(travIn)
                 {
-                    if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
+                    if (travIn->file_size == travOut->file_size)
                     {
-                        ++sno;
-                        if (turn)
-                            printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
-                        printf(" %d) %s\n", sno, travIn->path);
-                        ++totDuplicates;
-                        temp->next = travIn->next;
-                        free(travIn);
-                        travIn = temp->next;
-                        turn = 0;
+                        int resO = 0, resI = 0;
+                        if (!travOut->file_hash)
+                        {
+                            travOut->file_hash = malloc(HASH_LENGTH + 1);
+                            resO = sha256_file(travOut->path, travOut->file_hash);
+                            if (resO)
+                            {
+                                fprintf(stderr, "Unable to compute file hash of %s!\n", travOut->path);
+                                break;
+                            }
+                        }
+                        if (!travIn->file_hash)
+                        {
+                            travIn->file_hash = malloc(HASH_LENGTH + 1);
+                            resI = sha256_file(travIn->path, travIn->file_hash);       
+                            if (resI)
+                                fprintf(stderr, "Unable to compute file hash of %s!\n", travIn->path);
+                        }
+                        if (!resO && !resI)
+                        {
+                            if (strcmp(travIn->file_hash, travIn->file_hash) == 0)
+                            {
+                                ++sno;
+                                if (turn)
+                                    printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
+                                printf(" %d) %s\n", sno, travIn->path);
+                                ++totDuplicates;
+                                temp->next = travIn->next;
+                                free(travIn);
+                                travIn = temp->next;
+                                turn = 0;
+                            }
+                            else
+                            {
+                                temp = travIn;
+                                travIn = travIn->next;
+                            }
+                        }
+                        else
+                        {
+                            temp = travIn;
+                            travIn = travIn->next;
+                        }
                     }
                     else
                     {
@@ -181,6 +247,7 @@ void unload(void)
             {
                 temp = trav;
                 trav = trav->next;
+                free(temp->file_hash);
                 free(temp);
             }
             hashtable[i] = NULL;
