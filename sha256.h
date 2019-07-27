@@ -1,9 +1,6 @@
 //https://www.openssl.org/docs/manmaster/man3/SHA1.html
 //https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
 
-#include <openssl/sha.h>
-#include <stdlib.h>
-
 int sha256_file(char *path, char outputBuffer[65])
 {
     // Opens file from given path
