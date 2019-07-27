@@ -208,11 +208,11 @@ void check(void)
     // Pointer to hold the previous node in the linked list
     node *temp = NULL;
 
-    // Checking
     for (int i = 0; i < N; ++i)
     {
         if (hashtable[i])
         {
+            // Checking
             travOut = hashtable[i];
             while(travOut)
             {
@@ -286,6 +286,24 @@ void check(void)
                 }
                 travOut = travOut->next;
             }
+
+            // Unloading
+
+            // Pointer to trav linked lists in hashtable
+            node* trav = NULL;
+
+            // Pointer to hold the node to be freed
+            node* temp = NULL;  
+
+            trav = hashtable[i];
+            while(trav)
+            {
+                temp = trav;
+                trav = trav->next;
+                free(temp->file_hash);
+                free(temp);
+            }
+            hashtable[i] = NULL;
         }
     }
 }
@@ -300,28 +318,4 @@ unsigned int duplicates(void)
 unsigned long size_taken(void)
 {
     return sizeTaken;
-}
-
-void unload(void)
-{
-    // Pointer to trav linked lists in hashtable
-    node* trav = NULL;
-
-    // Pointer to hold the node to be freed
-    node* temp = NULL;
-    for (int i = 0; i < N; ++i)
-    {
-        if (hashtable[i])
-        {
-            trav = hashtable[i];
-            while(trav)
-            {
-                temp = trav;
-                trav = trav->next;
-                free(temp->file_hash);
-                free(temp);
-            }
-            hashtable[i] = NULL;
-        }
-    }
 }

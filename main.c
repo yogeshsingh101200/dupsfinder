@@ -27,10 +27,7 @@ int main(int argc, char* argv[])
 
     // Stats
     printf("\n\n Total no of duplicates: %u", duplicates());
-    printf("\n Total size taken by duplicate files: %lu Bytes", size_taken());
-    
-    // Unloads directory from memory
-    unload();
+    printf("\n Total size taken by duplicate files: %lu Bytes\n\n", size_taken());
 
     return 0;
 }
