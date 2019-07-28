@@ -1,12 +1,9 @@
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <dirent.h>
 #include <openssl/sha.h>
 #include <stdlib.h>
 
 #include "finder.h"
-
 
 // No of buckets in hashtable
 #define N 100000
@@ -39,7 +36,7 @@ unsigned int hash(long size)
 }
 
 // Tracks total no of duplicates
-unsigned int totDuplicates = 0;
+unsigned int duplicates = 0;
 
 // Tracks total size taken by duplicates
 unsigned long sizeTaken = 0;
@@ -64,7 +61,6 @@ long size_of_file(char path[])
 // Calculates sha256 hash of a file
 //https://www.openssl.org/docs/manmaster/man3/SHA1.html
 //https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
-
 int sha256_file(char *path, char outputBuffer[65])
 {
     // Opens file from given path
@@ -112,7 +108,7 @@ int sha256_file(char *path, char outputBuffer[65])
     // Free memory
     free(buffer);
 
-    // Indicates succes
+    // Indicates success
     return 0;
 }
 
@@ -153,6 +149,7 @@ int search(char* path)
     // Closes directory
     closedir(dir);
 
+    // Success
     return 0;
 }
 
@@ -194,6 +191,7 @@ bool load(char *path)
         hashtable[index] = file;
     }
 
+    // Success
     return true;
 }
 
@@ -214,16 +212,31 @@ void check(void)
         {
             // Checking
             travOut = hashtable[i];
+
+            // Till the end of linked list
             while(travOut)
             {
+                // Sno is serial no and turn is to print 'duplicate of' only 1 time
                 int sno = 0, turn = 1;
+
+                // To hold the previous node
                 temp = travOut;
+
+                // To traverse remaining nodes in linked list
                 travIn = travOut->next;
+
+                // Until end of list
                 while(travIn)
                 {
+                    // To decide temp pointer's movement
+                    bool stay = false;
+
+                    // Groups files on the basis of file size
                     if (travIn->file_size == travOut->file_size)
                     {
                         int resO = 0, resI = 0;
+                        
+                        // Calculates hash of parent file only if does not exist
                         if (!travOut->file_hash)
                         {
                             travOut->file_hash = malloc(HASH_LENGTH + 1);
@@ -239,6 +252,8 @@ void check(void)
                                 break;
                             }
                         }
+
+                        // Calculates hash of child file only if does not exist
                         if (!travIn->file_hash)
                         {
                             travIn->file_hash = malloc(HASH_LENGTH + 1);
@@ -251,6 +266,8 @@ void check(void)
                             if (resI)
                                 fprintf(stderr, "Unable to compute file hash of %s!\n", travIn->path);
                         }
+
+                        // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
                         if (!resO && !resI)
                         {
                             if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
@@ -259,31 +276,25 @@ void check(void)
                                 if (turn)
                                     printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
                                 printf(" %d) %s\n", sno, travIn->path);
-                                ++totDuplicates;
+                                ++duplicates;
                                 sizeTaken += travIn->file_size;
+
+                                // Removing duplicate file
                                 temp->next = travIn->next;
                                 free(travIn);
-                                travIn = temp->next;
+                                stay = true;
                                 turn = 0;
                             }
-                            else
-                            {
-                                temp = travIn;
-                                travIn = travIn->next;
-                            }
-                        }
-                        else
-                        {
-                            temp = travIn;
-                            travIn = travIn->next;
                         }
                     }
-                    else
-                    {
+
+                    // Moves to next node on list
+                    if (!stay)
                         temp = travIn;
-                        travIn = travIn->next;
-                    }
+                    travIn = temp->next;
                 }
+                
+                // Moves to next node
                 travOut = travOut->next;
             }
 
@@ -308,14 +319,14 @@ void check(void)
     }
 }
 
-// Returns total no of duplicates found
-unsigned int duplicates(void)
+// Returns total no of duplicates
+unsigned int getDuplicates(void)
 {
-    return totDuplicates;
+    return duplicates;
 }
 
 // Returns total size taken by duplicates
-unsigned long size_taken(void)
+unsigned long getSizeTaken(void)
 {
     return sizeTaken;
 }

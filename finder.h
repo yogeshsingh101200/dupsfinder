@@ -3,6 +3,8 @@
 #ifndef FINDER_H
 #define FINDER_H
 
+#include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 
 // Maximum path length
@@ -23,10 +25,10 @@ bool load(char*);
 // Function to find duplicates
 void check(void);
 
-// Returns total no of duplicates found
-unsigned int duplicates();
+// Returns total no of duplicates
+unsigned int getDuplicates();
 
 // Returns total size taken by duplicate files
-unsigned long size_taken();
+unsigned long getSizeTaken();
 
 #endif

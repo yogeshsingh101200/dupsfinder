@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "finder.h"
 
 int main(int argc, char* argv[])
@@ -8,7 +5,7 @@ int main(int argc, char* argv[])
     // Checks for correct usage
     if (argc != 2)
     {
-        printf("Usage: main <directory>\n");
+        fprintf(stderr, "Usage: main <directory>\n");
         return -1;
     }
     
@@ -22,12 +19,12 @@ int main(int argc, char* argv[])
     // Searches directories for file and then loads them to memory
     search(directory);
 
-    // Checks for duplicate files
+    // Checks and returns duplicate files
     check();
 
     // Stats
-    printf("\n\n Total no of duplicates: %u", duplicates());
-    printf("\n Total size taken by duplicate files: %lu Bytes\n\n", size_taken());
+    printf("\n\n Total no of duplicates: %u", getDuplicates());
+    printf("\n Total size taken by duplicate files: %lu Bytes\n\n", getSizeTaken());
 
     return 0;
 }
