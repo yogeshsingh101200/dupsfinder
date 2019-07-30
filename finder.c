@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <openssl/sha.h>
@@ -54,8 +56,14 @@ long size_of_file(char path[])
     // Moves file pointer to end
     fseek(file, 0, SEEK_END);
     
+    // File size
+    long size = ftell(file);
+
+    // Closes file
+    fclose(file);
+
     // Returns file size
-    return ftell(file);
+    return size;
 }
 
 // Calculates sha256 hash of a file
@@ -217,7 +225,7 @@ void check(void)
             while(travOut)
             {
                 // Sno is serial no and turn is to print 'duplicate of' only 1 time
-                int sno = 0, turn = 1;
+                int turn = 1;
 
                 // To hold the previous node
                 temp = travOut;
@@ -272,10 +280,9 @@ void check(void)
                         {
                             if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                             {
-                                ++sno;
                                 if (turn)
-                                    printf("\n\n Duplicate(s) of %s is at:\n", travOut->path);
-                                printf(" %d) %s\n", sno, travIn->path);
+                                    printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
+                                printf("%s\n", travIn->path);
                                 ++duplicates;
                                 sizeTaken += travIn->file_size;
 
