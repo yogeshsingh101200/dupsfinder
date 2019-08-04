@@ -8,8 +8,9 @@ int main(int argc, char* argv[])
     // Checks for correct usage
     if (argc != 2)
     {
-        fprintf(stderr, "Usage: main <directory>\n");
-        return -1;
+        /*fprintf(stderr, "Usage: main <directory>\n");
+        return -1;*/
+        argv[1] = "../dups";
     }
     
     // Stores directory path
