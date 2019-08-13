@@ -26,6 +26,9 @@ int main(int argc, char* argv[])
     // Checks and returns duplicate files
     check();
 
+    // Benchmarks
+    benchmarks();
+    
     // Stats
     printf("\n\n Total no of duplicates: %u", getDuplicates());
     printf("\n Total size taken by duplicate files: %lu Bytes\n\n", getSizeTaken());

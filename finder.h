@@ -29,4 +29,7 @@ unsigned int getDuplicates();
 // Returns total size taken by duplicate files
 unsigned long getSizeTaken();
 
+// Benchmarks
+void benchmarks(void);
+
 #endif

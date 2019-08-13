@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <openssl/sha.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "finder.h"
 #include "xxhash.h"
@@ -45,6 +46,27 @@ unsigned int duplicates = 0;
 // Tracks total size taken by duplicates
 unsigned long sizeTaken = 0;
 
+// Record no of calls made to sha256_file()
+unsigned int sha256_calls = 0;
+
+// Record no of calls made to xxhash_file()
+unsigned int xxhash_calls = 0;
+
+// Records no of xxhash matched
+unsigned int xxhash_matched = 0;
+
+// Record total time taken by sha256_file();
+double time_sha256 = 0.0;
+
+// Record total time taken by xxhash_file();
+double time_xxhash = 0.0;
+
+// Calculates cpu time 
+double calculate(clock_t start, clock_t end)
+{
+    return (double)(end - start) / CLOCKS_PER_SEC;
+}
+
 // Returns total file size in bytes
 long size_of_file(char path[])
 {
@@ -71,8 +93,10 @@ long size_of_file(char path[])
 // Calculates sha256 hash of a file
 //https://www.openssl.org/docs/manmaster/man3/SHA1.html
 //https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
-int sha256_file(char *path, char outputBuffer[65])
+int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
 {
+    ++sha256_calls;
+
     // Opens file from given path
     FILE *file = fopen(path, "rb");
     if (!file)
@@ -124,6 +148,8 @@ int sha256_file(char *path, char outputBuffer[65])
 
 int xxhash_file(char *path, unsigned long long *hash)
 {
+    ++xxhash_calls;
+    
     // Opens file from given path
     FILE *file = fopen(path, "rb");
     if (!file)
@@ -232,18 +258,26 @@ bool load(char *path)
 
 bool compXXHASH(node *travOut, node *travIn)
 {
+    clock_t start, end;
+
     int resO = 0, resI = 0;
     
     // Calculates hash of parent file only if does not exist
     if (!travOut->xxhash)
     {
+        start = clock();
         resO = xxhash_file(travOut->path, &travOut->xxhash);
+        end = clock();
+        time_xxhash += calculate(start, end);
     }
 
     // Calculates hash of child file only if does not exist
     if (!travIn->xxhash)
     {
-        resI = xxhash_file(travIn->path, &travIn->xxhash);       
+        start = clock();
+        resI = xxhash_file(travIn->path, &travIn->xxhash);
+        end = clock();
+        time_xxhash += calculate(start, end);       
     }
 
     // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
@@ -251,6 +285,7 @@ bool compXXHASH(node *travOut, node *travIn)
     {
         if (travOut->xxhash == travIn->xxhash)
         {
+            ++xxhash_matched;
             return true;
         }
     }
@@ -259,6 +294,7 @@ bool compXXHASH(node *travOut, node *travIn)
 
 void check(void)
 {
+    clock_t start, end;
     // Pointer to traverse through the linked list
     node *travOut = NULL;
     
@@ -306,7 +342,10 @@ void check(void)
                                     fprintf(stderr, "Not enough memory!\n");
                                     return;
                                 }
+                                start = clock();
                                 resO = sha256_file(travOut->path, travOut->file_hash);
+                                end = clock();
+                                time_sha256 += calculate(start, end);
                             }
 
                             // Calculates hash of child file only if does not exist
@@ -318,7 +357,10 @@ void check(void)
                                     fprintf(stderr, "Not enough memory!\n");
                                     return;
                                 }
-                                resI = sha256_file(travIn->path, travIn->file_hash);       
+                                start = clock();
+                                resI = sha256_file(travIn->path, travIn->file_hash);    
+                                end = clock();
+                                time_sha256 += calculate(start, end);   
                             }
 
                             // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
@@ -326,9 +368,9 @@ void check(void)
                             {
                                 if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                                 {
-                                    if (turn)
-                                        printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
-                                    printf("%s\n", travIn->path);
+                                    //if (turn)
+                                    //    printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
+                                    //printf("%s\n", travIn->path);
                                     ++duplicates;
                                     sizeTaken += travIn->file_size;
 
@@ -383,4 +425,15 @@ unsigned int getDuplicates(void)
 unsigned long getSizeTaken(void)
 {
     return sizeTaken;
+}
+
+// Benchmarks
+void benchmarks(void)
+{
+    printf("\n Time taken by sha256_file(): %lf\n", time_sha256);
+    printf("\n No of calls to sha256_file(): %u\n", sha256_calls);
+    printf("\n Time taken by xxhash_file(): %lf\n", time_xxhash);
+    printf("\n No of calls to xxhash_file(): %u\n", xxhash_calls);
+    printf("\n No of xxhash matched: %u\n", xxhash_matched);
+    printf("\n Total time taken by sha256 and xxhash: %lf\n", time_sha256 + time_xxhash);
 }
