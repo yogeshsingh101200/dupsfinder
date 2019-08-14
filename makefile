@@ -1,14 +1,15 @@
-main2: main.o finder.o xxhash.o
-	gcc main.o finder.o xxhash.o -lcrypto -o main2
+CC = gcc
+CFLAGS = -O
+LIBS = -lcrypto
+TARGET = main2
+SRCS = main.c finder.c xxhash.c
+OBJS = $(SRCS:.c=.o)
 
-main.o: main.c finder.h
-	gcc -c main.c 
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $(TARGET)
 
-finder.o: finder.c finder.h xxhash.h
-	gcc -c finder.c
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
-xxhash.o: xxhash.c
-	gcc -c xxhash.c
-
-clean:
+clean: 
 	rm *.o
