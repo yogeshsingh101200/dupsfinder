@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O
+CFLAGS = -O3
 LIBS = -lcrypto
 TARGET = main2
 SRCS = main.c finder.c xxhash.c
