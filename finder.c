@@ -10,7 +10,7 @@
 #include "xxhash.h"
 
 // No of buckets in hashtable
-#define N 100000
+#define N 65535
 
 // Structure of a node in hashtable
 typedef struct node
@@ -314,7 +314,7 @@ void check(void)
             // Till the end of linked list
             while(travOut)
             {
-                // Sno is serial no and turn is to print 'duplicate of' only 1 time
+                // turn is to print 'duplicate of' only 1 time
                 int turn = 1;
 
                 // To hold the previous node
@@ -368,9 +368,9 @@ void check(void)
                             {
                                 if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                                 {
-                                    //if (turn)
-                                    //    printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
-                                    //printf("%s\n", travIn->path);
+                                    if (turn)
+                                        printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
+                                    printf("%s\n", travIn->path);
                                     ++duplicates;
                                     sizeTaken += travIn->file_size;
 
