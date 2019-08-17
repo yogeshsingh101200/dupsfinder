@@ -237,20 +237,10 @@ bool load(char *path)
     strcpy(file->path, path);
     file->xxhash = 0;
     file->file_hash = NULL;
-    file->next = NULL;
 
-    // For first file insertion
-    if (!hashtable[index])
-    {
-        hashtable[index] = file;
-    }
-
-    // For other insertions
-    else
-    {
-        file->next = hashtable[index];
-        hashtable[index] = file;
-    }
+    // File insertion
+    file->next = hashtable[index];
+    hashtable[index] = file;
 
     // Success
     return true;
