@@ -2,6 +2,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <openssl/sha.h>
 #include <stdlib.h>
 #include <time.h>
@@ -15,7 +17,7 @@
 // Structure of a node in hashtable
 typedef struct node
 {
-    long file_size;
+    off_t file_size;
     char path[MAX_PATH];
     unsigned long long xxhash;
     char* file_hash;
@@ -34,17 +36,11 @@ void initialize(void)
     }
 }
 
-// Returns index for hashtable for given size
-unsigned int hash(long size)
-{
-    return size % N;
-}
-
 // Tracks total no of duplicates
 unsigned int duplicates = 0;
 
 // Tracks total size taken by duplicates
-unsigned long sizeTaken = 0;
+off_t sizeTaken = 0;
 
 // Record no of calls made to sha256_file()
 unsigned int sha256_calls = 0;
@@ -71,29 +67,6 @@ double time_xxhash = 0.0;
 double calculate(clock_t start, clock_t end)
 {
     return (double)(end - start) / CLOCKS_PER_SEC;
-}
-
-// Returns total file size in bytes
-long size_of_file(char path[])
-{
-    // Opens file in binary mode to read
-    FILE *file = fopen(path, "rb");
-
-    // Handles unsuccessfull opening of file
-    if (!file)
-        return -1;
-
-    // Moves file pointer to end
-    fseek(file, 0, SEEK_END);
-    
-    // File size
-    long size = ftell(file);
-
-    // Closes file
-    fclose(file);
-
-    // Returns file size
-    return size;
 }
 
 // Calculates sha256 hash of a file
@@ -222,14 +195,9 @@ int search(char* path)
 
 bool load(char *path)
 {
-    // Find and store file size
-    long size = size_of_file(path);
-
-    if (size == -1)
-        return false;
-
-    // Getting hash out of file size
-    unsigned int index = hash(size);
+    // To get file stat like file size
+    struct stat file_stat;
+    stat(path, &file_stat);
 
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
@@ -240,10 +208,13 @@ bool load(char *path)
     }
 
     // Storing file info
-    file->file_size = size;
+    file->file_size = file_stat.st_size;
     strcpy(file->path, path);
     file->xxhash = 0;
     file->file_hash = NULL;
+
+    // Index in hashtable
+    unsigned int index = file->file_size % N;
 
     // File insertion
     file->next = hashtable[index];
