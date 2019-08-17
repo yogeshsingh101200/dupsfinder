@@ -49,6 +49,12 @@ unsigned long sizeTaken = 0;
 // Record no of calls made to sha256_file()
 unsigned int sha256_calls = 0;
 
+// Records total no of bytes read by sha256_file()
+long dataRead = 0;
+
+// Records total no of sets in which duplicates are distributed
+unsigned int sets = 0;
+
 // Record no of calls made to xxhash_file()
 unsigned int xxhash_calls = 0;
 
@@ -123,6 +129,7 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
     }
     while ((bytesRead = fread(buffer, 1, bufSize, file)))
     {
+        dataRead += bytesRead;
         SHA256_Update(&sha256, buffer, bytesRead);
     }
 
@@ -158,7 +165,7 @@ int xxhash_file(char *path, unsigned long long *hash)
         return 1;
     }
 
-    const int bufSize = 1000;
+    const int bufSize = 2048;
     unsigned char buffer[bufSize];
     int bytesRead = 0;
     bytesRead = fread(buffer, 1, bufSize, file);
@@ -285,6 +292,9 @@ bool compXXHASH(node *travOut, node *travIn)
 void check(void)
 {
     clock_t start, end;
+
+    bool isDup;
+
     // Pointer to traverse through the linked list
     node *travOut = NULL;
     
@@ -298,6 +308,8 @@ void check(void)
     {
         if (hashtable[i])
         {
+            isDup = false;
+
             // Checking
             travOut = hashtable[i];
 
@@ -358,6 +370,8 @@ void check(void)
                             {
                                 if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
                                 {
+                                    isDup = true;
+
                                     if (turn)
                                         printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
                                     printf("%s\n", travIn->path);
@@ -401,6 +415,9 @@ void check(void)
                 free(temp);
             }
             hashtable[i] = NULL;
+
+            if (isDup)
+                ++sets;
         }
     }
 }
@@ -420,8 +437,10 @@ unsigned long getSizeTaken(void)
 // Benchmarks
 void benchmarks(void)
 {
+    printf("\n No of sets duplicates are distributed: %u\n", sets);
     printf("\n Time taken by sha256_file(): %lf\n", time_sha256);
     printf("\n No of calls to sha256_file(): %u\n", sha256_calls);
+    printf("\n Total bytes read by sha256_file(): %ld\n", dataRead);
     printf("\n Time taken by xxhash_file(): %lf\n", time_xxhash);
     printf("\n No of calls to xxhash_file(): %u\n", xxhash_calls);
     printf("\n No of xxhash matched: %u\n", xxhash_matched);
