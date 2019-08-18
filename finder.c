@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -152,17 +151,20 @@ int xxhash_file(char *path, unsigned long long *hash)
     return 0;
 }
 
-int search(char* path)
+void search(char* path)
 {
     // To store path of subdirectory
     char newpath[MAX_PATH];
     
+    // To get file stat
+    struct stat file_stat;
+
     // Opens directory
     DIR* dir = opendir(path);
 
     // Validates
     if (!dir)
-        return 1;
+        return;
 
     // To read directory
     struct dirent* d = readdir(dir);
@@ -173,12 +175,17 @@ int search(char* path)
         if (strcmp(d->d_name, ".") != 0 && strcmp(d->d_name, "..") != 0)
         {
             strcat(newpath, d->d_name);
-            if (search(newpath))
+            stat(newpath, &file_stat);
+            if (S_ISREG(file_stat.st_mode))
             {
-                if (!load(newpath))
+                if (!load(newpath, file_stat.st_size))
                 {
                     fprintf(stderr, "Unable to load file at %s\n", newpath);
                 }
+            }
+            else if (S_ISDIR(file_stat.st_mode))
+            {
+                search(newpath);
             }
         }
         
@@ -188,17 +195,10 @@ int search(char* path)
 
     // Closes directory
     closedir(dir);
-
-    // Success
-    return 0;
 }
 
-bool load(char *path)
+bool load(char *path, off_t size)
 {
-    // To get file stat like file size
-    struct stat file_stat;
-    stat(path, &file_stat);
-
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
     if (!file)
@@ -208,7 +208,7 @@ bool load(char *path)
     }
 
     // Storing file info
-    file->file_size = file_stat.st_size;
+    file->file_size = size;
     strcpy(file->path, path);
     file->xxhash = 0;
     file->file_hash = NULL;

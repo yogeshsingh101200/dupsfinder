@@ -15,10 +15,10 @@
 void initialize(void);
 
 // Function to search directory for files
-int search(char*);                    
+void search(char*);                    
 
 // Function to load files in memory
-bool load(char*);
+bool load(char*, off_t);
 
 // Function to find duplicates
 void check(void);
