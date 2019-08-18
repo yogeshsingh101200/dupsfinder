@@ -39,7 +39,7 @@ void initialize(void)
 unsigned int duplicates = 0;
 
 // Tracks total size taken by duplicates
-off_t sizeTaken = 0;
+off_t dupsSize = 0;
 
 // Record no of calls made to sha256_file()
 unsigned int sha256_calls = 0;
@@ -139,8 +139,7 @@ int xxhash_file(char *path, unsigned long long *hash)
 
     const int bufSize = 2048;
     unsigned char buffer[bufSize];
-    int bytesRead = 0;
-    bytesRead = fread(buffer, 1, bufSize, file);
+    int bytesRead = fread(buffer, 1, bufSize, file);
     unsigned long long const seed = 0;
     *hash = XXH64(buffer, bytesRead, seed);
 
@@ -347,7 +346,7 @@ void check(void)
                                         printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
                                     printf("%s\n", travIn->path);
                                     ++duplicates;
-                                    sizeTaken += travIn->file_size;
+                                    dupsSize += travIn->file_size;
 
                                     // Removing duplicate file
                                     temp->next = travIn->next;
@@ -400,9 +399,29 @@ unsigned int getDuplicates(void)
 }
 
 // Returns total size taken by duplicates
-unsigned long getSizeTaken(void)
+void totalSize(void)
 {
-    return sizeTaken;
+    const unsigned int KB = 1024;
+    const unsigned int MB = 1024 * 1024;
+    const unsigned int GB = 1024 * 1024 * 1024;
+
+    if (dupsSize < KB)
+    {
+        printf("\n Total space taken by duplicates: %ld Bytes\n", dupsSize);
+    }
+    if (dupsSize >= KB && dupsSize < MB)
+    {
+        printf("\n Total space taken by duplicates: %ld KB\n", dupsSize / KB);
+    }
+    else if (dupsSize >= MB && dupsSize < GB)
+    {
+        printf("\n Total space taken by duplicates: %ld MB\n", dupsSize / MB);
+    }
+    else
+    {
+        printf("\n Total space taken by duplicates: %ld GB\n", dupsSize / GB);
+    }
+    
 }
 
 // Benchmarks

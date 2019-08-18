@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     
     // Stats
     printf("\n\n Total no of duplicates: %u", getDuplicates());
-    printf("\n Total size taken by duplicate files: %ld Bytes\n\n", getSizeTaken());
+    totalSize();
 
     return 0;
 }
