@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <string.h>
 
 #include "finder.h"
@@ -8,9 +9,8 @@ int main(int argc, char* argv[])
     // Checks for correct usage
     if (argc != 2)
     {
-        /*fprintf(stderr, "Usage: main <directory>\n");
-        return -1;*/
-        argv[1] = "../dups";
+        fprintf(stderr, "Usage: main <directory>\n");
+        return -1;
     }
     
     // Stores directory path
@@ -20,8 +20,13 @@ int main(int argc, char* argv[])
     // Initializes hash table
     initialize();
 
-    // Searches directories for file and then loads them to memory
+    // Searches directories for file and then loads them to memory    
+    // Time taken by search()
+    extern double time_search;
+    clock_t start = clock();
     search(directory);
+    clock_t end = clock();
+    time_search = calculate(start, end);
 
     // Checks and returns duplicate files
     check();

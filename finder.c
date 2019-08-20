@@ -56,11 +56,14 @@ unsigned int xxhash_calls = 0;
 // Records no of xxhash matched
 unsigned int xxhash_matched = 0;
 
-// Record total time taken by sha256_file();
+// Record total time taken by sha256_file()
 double time_sha256 = 0.0;
 
-// Record total time taken by xxhash_file();
+// Record total time taken by xxhash_file()
 double time_xxhash = 0.0;
+
+// Record toatl time taken by search()
+double time_search = 0.0;
 
 // Calculates cpu time 
 double calculate(clock_t start, clock_t end)
@@ -136,8 +139,8 @@ int xxhash_file(char *path, unsigned long long *hash)
         fprintf(stderr, "Unable to open file %s\n", path);
         return 1;
     }
-
-    const int bufSize = 2048;
+    
+    #define bufSize 2048
     unsigned char buffer[bufSize];
     int bytesRead = fread(buffer, 1, bufSize, file);
     unsigned long long const seed = 0;
@@ -150,7 +153,7 @@ int xxhash_file(char *path, unsigned long long *hash)
     return 0;
 }
 
-void search(char* path)
+int search(char* path)
 {
     // To store path of subdirectory
     char newpath[MAX_PATH];
@@ -163,7 +166,7 @@ void search(char* path)
 
     // Validates
     if (!dir)
-        return;
+        return -1;
 
     // To read directory
     struct dirent* d = readdir(dir);
@@ -184,7 +187,10 @@ void search(char* path)
             }
             else if (S_ISDIR(file_stat.st_mode))
             {
-                search(newpath);
+                if (search(newpath))
+                {
+                    fprintf(stderr, "Unable to load file at %s\n", newpath);
+                }
             }
         }
         
@@ -194,6 +200,9 @@ void search(char* path)
 
     // Closes directory
     closedir(dir);
+
+    // Success
+    return 0;
 }
 
 bool load(char *path, off_t size)
@@ -405,29 +414,29 @@ void totalSize(void)
     const unsigned int MB = 1024 * 1024;
     const unsigned int GB = 1024 * 1024 * 1024;
 
-    if (dupsSize < KB)
-    {
-        printf("\n Total space taken by duplicates: %ld Bytes\n", dupsSize);
-    }
-    if (dupsSize >= KB && dupsSize < MB)
-    {
-        printf("\n Total space taken by duplicates: %ld KB\n", dupsSize / KB);
-    }
-    else if (dupsSize >= MB && dupsSize < GB)
-    {
-        printf("\n Total space taken by duplicates: %ld MB\n", dupsSize / MB);
-    }
-    else
+    if (dupsSize >= GB)
     {
         printf("\n Total space taken by duplicates: %ld GB\n", dupsSize / GB);
     }
-    
+    else if (dupsSize >= MB)
+    {
+        printf("\n Total space taken by duplicates: %ld MB\n", dupsSize / MB);
+    }
+    else if (dupsSize >= KB)
+    {
+        printf("\n Total space taken by duplicates: %ld KB\n", dupsSize / KB);
+    }
+    else
+    {
+        printf("\n Total space taken by duplicates: %ld Bytes\n", dupsSize);
+    }   
 }
 
 // Benchmarks
 void benchmarks(void)
 {
     printf("\n No of sets duplicates are distributed: %u\n", sets);
+    printf("\n Time taken by search(): %lf\n", time_search);
     printf("\n Time taken by sha256_file(): %lf\n", time_sha256);
     printf("\n No of calls to sha256_file(): %u\n", sha256_calls);
     printf("\n Total bytes read by sha256_file(): %ld\n", dataRead);

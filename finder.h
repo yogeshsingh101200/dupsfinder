@@ -11,11 +11,14 @@
 // Hash length
 #define HASH_LENGTH 64
 
+// Calculate time
+double calculate(clock_t, clock_t);
+
 // Initializes hashtable buckets
 void initialize(void);
 
 // Function to search directory for files
-void search(char*);                    
+int search(char*);                    
 
 // Function to load files in memory
 bool load(char*, off_t);
