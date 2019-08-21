@@ -50,6 +50,9 @@ long dataRead = 0;
 // Records total no of sets in which duplicates are distributed
 unsigned int sets = 0;
 
+// Records no of size matched
+unsigned int size_matched = 0;
+
 // Record no of calls made to xxhash_file()
 unsigned int xxhash_calls = 0;
 
@@ -139,8 +142,8 @@ int xxhash_file(char *path, unsigned long long *hash)
         fprintf(stderr, "Unable to open file %s\n", path);
         return 1;
     }
-    
-    #define bufSize 2048
+
+    const int bufSize = 2048;
     unsigned char buffer[bufSize];
     int bytesRead = fread(buffer, 1, bufSize, file);
     unsigned long long const seed = 0;
@@ -310,6 +313,7 @@ void check(void)
                     // Groups files on the basis of file size
                     if (travOut->file_size == travIn->file_size)
                     {
+                        ++size_matched;
                         if (compXXHASH(travOut, travIn))
                         {
                             int resO = 0, resI = 0;
@@ -436,6 +440,7 @@ void totalSize(void)
 void benchmarks(void)
 {
     printf("\n No of sets duplicates are distributed: %u\n", sets);
+    printf("\n No of size mathced: %u\n", size_matched);
     printf("\n Time taken by search(): %lf\n", time_search);
     printf("\n Time taken by sha256_file(): %lf\n", time_sha256);
     printf("\n No of calls to sha256_file(): %u\n", sha256_calls);
