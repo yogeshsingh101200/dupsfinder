@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <dirent.h>
+#include <ftw.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <openssl/sha.h>
@@ -97,7 +97,7 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
     SHA256_Init(&sha256);
 
     // To read chunks of data repeatedly and feed them to sha256 update to hash
-    const int bufSize = 32768;
+    const int bufSize = 256 * 1024;
     unsigned char *buffer = malloc(bufSize);
     int bytesRead = 0;
     if (!buffer)
@@ -156,59 +156,31 @@ int xxhash_file(char *path, unsigned long long *hash)
     return 0;
 }
 
-int search(char* path)
+int fileTree(const char *fpath, const struct stat *sb, int typeflag)
 {
-    // To store path of subdirectory
-    char newpath[MAX_PATH];
-    
-    // To get file stat
-    struct stat file_stat;
-
-    // Opens directory
-    DIR* dir = opendir(path);
-
-    // Validates
-    if (!dir)
-        return -1;
-
-    // To read directory
-    struct dirent* d = readdir(dir);
-    while (d)
+    if (typeflag == FTW_F)
     {
-        strcpy(newpath, path);
-        strcat(newpath, "/");
-        if (strcmp(d->d_name, ".") != 0 && strcmp(d->d_name, "..") != 0)
+        if (!load(fpath, sb->st_size))
         {
-            strcat(newpath, d->d_name);
-            stat(newpath, &file_stat);
-            if (S_ISREG(file_stat.st_mode))
-            {
-                if (!load(newpath, file_stat.st_size))
-                {
-                    fprintf(stderr, "Unable to load file at %s\n", newpath);
-                }
-            }
-            else if (S_ISDIR(file_stat.st_mode))
-            {
-                if (search(newpath))
-                {
-                    fprintf(stderr, "Unable to load file at %s\n", newpath);
-                }
-            }
+            fprintf(stderr, "Unable to load file at %s\n", fpath);
+            return -1;
         }
-        
-        // Next entry
-        d = readdir(dir);
     }
-
-    // Closes directory
-    closedir(dir);
-
-    // Success
+    else if (typeflag == FTW_DNR)
+    {
+        fprintf(stderr, "Unable to read %s\n", fpath);
+    }
     return 0;
 }
 
-bool load(char *path, off_t size)
+void search(const char* dirpath)
+{
+    int res = ftw(dirpath, fileTree, FOPEN_MAX);
+    if (res)
+        fprintf(stderr, "Unable to traverse file tree\n");
+}
+
+bool load(const char *path, off_t size)
 {
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
@@ -420,15 +392,15 @@ void totalSize(void)
 
     if (dupsSize >= GB)
     {
-        printf("\n Total space taken by duplicates: %ld GB\n", dupsSize / GB);
+        printf("\n Total space taken by duplicates: %.02lf GB\n", (double)dupsSize / GB);
     }
     else if (dupsSize >= MB)
     {
-        printf("\n Total space taken by duplicates: %ld MB\n", dupsSize / MB);
+        printf("\n Total space taken by duplicates: %.02lf MB\n", (double)dupsSize / MB);
     }
     else if (dupsSize >= KB)
     {
-        printf("\n Total space taken by duplicates: %ld KB\n", dupsSize / KB);
+        printf("\n Total space taken by duplicates: %.02lf KB\n", (double)dupsSize / KB);
     }
     else
     {

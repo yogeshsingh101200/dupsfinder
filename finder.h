@@ -18,10 +18,10 @@ double calculate(clock_t, clock_t);
 void initialize(void);
 
 // Function to search directory for files
-int search(char*);                    
+void search(const char*);                    
 
 // Function to load files in memory
-bool load(char*, off_t);
+bool load(const char*, off_t);
 
 // Function to find duplicates
 void check(void);
