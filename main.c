@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "finder.h"
@@ -40,9 +41,6 @@ int main(int argc, char* argv[])
 
     // Unloads files from memory
     unload();
-
-    // Benchmarks
-    benchmarks();
     
     // Stats
     printf("\n\n Total no of duplicates: %u", getDuplicates());

@@ -11,9 +11,6 @@
 // Hash length
 #define HASH_LENGTH 64
 
-// Calculate time
-double calculate(clock_t, clock_t);
-
 // Initializes hashtable buckets
 void initialize(void);
 
@@ -34,8 +31,5 @@ unsigned int getDuplicates();
 
 // Returns total size taken by duplicate files
 void totalSize(void);
-
-// Benchmarks
-void benchmarks(void);
 
 #endif
