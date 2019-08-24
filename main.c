@@ -21,15 +21,25 @@ int main(int argc, char* argv[])
     initialize();
 
     // Searches directories for file and then loads them to memory    
-    // Time taken by search()
-    extern double time_search;
-    clock_t start = clock();
-    search(directory);
-    clock_t end = clock();
-    time_search = calculate(start, end);
+    if (search(directory) == false)
+    {
+        // Clears before exiting
+        unload();
 
+        exit(-1);
+    }      
+    
     // Checks and returns duplicate files
-    check();
+    if (check() == false)
+    {
+        // Clears before exiting
+        unload();
+
+        exit(-1);
+    }
+
+    // Unloads files from memory
+    unload();
 
     // Benchmarks
     benchmarks();

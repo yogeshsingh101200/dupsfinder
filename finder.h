@@ -18,13 +18,16 @@ double calculate(clock_t, clock_t);
 void initialize(void);
 
 // Function to search directory for files
-void search(const char*);                    
+bool search(const char*);                    
 
 // Function to load files in memory
-bool load(const char*, off_t);
+bool load(const char*, long);
 
 // Function to find duplicates
-void check(void);
+bool check(void);
+
+// Function to unload files from memory
+bool unload(void);
 
 // Returns total no of duplicates
 unsigned int getDuplicates();

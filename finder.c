@@ -1,10 +1,11 @@
+#include <ftw.h>
 #include <stdio.h>
 #include <string.h>
-#include <ftw.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <openssl/sha.h>
-#include <stdlib.h>
 #include <time.h>
 
 #include "finder.h"
@@ -16,7 +17,7 @@
 // Structure of a node in hashtable
 typedef struct node
 {
-    off_t file_size;
+    long file_size;
     char path[MAX_PATH];
     unsigned long long xxhash;
     char* file_hash;
@@ -39,7 +40,7 @@ void initialize(void)
 unsigned int duplicates = 0;
 
 // Tracks total size taken by duplicates
-off_t dupsSize = 0;
+long dupsSize = 0;
 
 // Record no of calls made to sha256_file()
 unsigned int sha256_calls = 0;
@@ -65,9 +66,6 @@ double time_sha256 = 0.0;
 // Record total time taken by xxhash_file()
 double time_xxhash = 0.0;
 
-// Record toatl time taken by search()
-double time_search = 0.0;
-
 // Calculates cpu time 
 double calculate(clock_t start, clock_t end)
 {
@@ -86,7 +84,7 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
     if (!file)
     {
         fprintf(stderr, "Unable to open file %s\n", path);
-        return 1;
+        return ENOENT;
     }
 
     // To store digest
@@ -103,7 +101,7 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
     if (!buffer)
     {
         fprintf(stderr, "Out of memory!\n");
-        return 2;
+        return ENOMEM;
     }
     while ((bytesRead = fread(buffer, 1, bufSize, file)))
     {
@@ -131,6 +129,7 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
     return 0;
 }
 
+// Calculates xxhash of a file
 int xxhash_file(char *path, unsigned long long *hash)
 {
     ++xxhash_calls;
@@ -140,7 +139,7 @@ int xxhash_file(char *path, unsigned long long *hash)
     if (!file)
     {
         fprintf(stderr, "Unable to open file %s\n", path);
-        return 1;
+        return -1;
     }
 
     const int bufSize = 2048;
@@ -173,20 +172,23 @@ int fileTree(const char *fpath, const struct stat *sb, int typeflag)
     return 0;
 }
 
-void search(const char* dirpath)
+bool search(const char* dirpath)
 {
-    int res = ftw(dirpath, fileTree, FOPEN_MAX);
-    if (res)
+    if (ftw(dirpath, fileTree, FOPEN_MAX))
+    {
         fprintf(stderr, "Unable to traverse file tree\n");
+        return false;
+    }
+    return true;
 }
 
-bool load(const char *path, off_t size)
+bool load(const char *path, long size)
 {
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));
     if (!file)
     {
-        fprintf(stderr, "Not enough memory!\n");
+        fprintf(stderr, "Not enough memory to load file!\n");
         return false;
     }
 
@@ -207,7 +209,7 @@ bool load(const char *path, off_t size)
     return true;
 }
 
-bool compXXHASH(node *travOut, node *travIn)
+bool compxxhash(node *travOut, node *travIn)
 {
     clock_t start, end;
 
@@ -243,10 +245,58 @@ bool compXXHASH(node *travOut, node *travIn)
     return false;
 }
 
-void check(void)
+int compsha256(node * travOut, node *travIn)
 {
-    clock_t start, end;
+    int resO = 0, resI = 0;
+    clock_t start, end;   
 
+    // Calculates hash of parent file only if does not exist
+    if (!travOut->file_hash)
+    {
+        travOut->file_hash = malloc(HASH_LENGTH + 1);
+        if (!travOut->file_hash)
+        {
+            fprintf(stderr, "Not enough memory!\n");
+            return ENOMEM;
+        }
+        start = clock();
+        resO = sha256_file(travOut->path, travOut->file_hash);
+        end = clock();
+        time_sha256 += calculate(start, end);
+        if (resO == ENOMEM)
+            return ENOMEM;
+    }
+
+    // Calculates hash of child file only if does not exist
+    if (!travIn->file_hash)
+    {
+        travIn->file_hash = malloc(HASH_LENGTH + 1);
+        if (!travIn->file_hash)
+        {
+            fprintf(stderr, "Not enough memory!\n");
+            return ENOMEM;
+        }
+        start = clock();
+        resI = sha256_file(travIn->path, travIn->file_hash);    
+        end = clock();
+        time_sha256 += calculate(start, end);  
+        if (resI == ENOMEM)
+            return ENOMEM; 
+    }
+
+    // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
+    if (!resO && !resI)
+    {
+        if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
+        {
+            return 0;
+        }
+    }
+    return -1;
+}
+
+bool check(void)
+{
     bool isDup;
 
     // Pointer to traverse through the linked list
@@ -286,60 +336,28 @@ void check(void)
                     if (travOut->file_size == travIn->file_size)
                     {
                         ++size_matched;
-                        if (compXXHASH(travOut, travIn))
+                        if (compxxhash(travOut, travIn))
                         {
-                            int resO = 0, resI = 0;
-                            
-                            // Calculates hash of parent file only if does not exist
-                            if (!travOut->file_hash)
+                            int result = compsha256(travOut, travIn);
+                            if (result == 0)
                             {
-                                travOut->file_hash = malloc(HASH_LENGTH + 1);
-                                if (!travOut->file_hash)
-                                {
-                                    fprintf(stderr, "Not enough memory!\n");
-                                    return;
-                                }
-                                start = clock();
-                                resO = sha256_file(travOut->path, travOut->file_hash);
-                                end = clock();
-                                time_sha256 += calculate(start, end);
+                                isDup = true;
+                                if (turn)
+                                    printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
+                                printf("%s\n", travIn->path);
+                                ++duplicates;
+                                dupsSize += travIn->file_size;
+
+                                // Removing duplicate file
+                                temp->next = travIn->next;
+                                free(travIn);
+                                travIn = temp->next;
+                                turn = 0;
+                                continue;
                             }
-
-                            // Calculates hash of child file only if does not exist
-                            if (!travIn->file_hash)
+                            else if (result == ENOMEM)
                             {
-                                travIn->file_hash = malloc(HASH_LENGTH + 1);
-                                if (!travIn->file_hash)
-                                {
-                                    fprintf(stderr, "Not enough memory!\n");
-                                    return;
-                                }
-                                start = clock();
-                                resI = sha256_file(travIn->path, travIn->file_hash);    
-                                end = clock();
-                                time_sha256 += calculate(start, end);   
-                            }
-
-                            // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
-                            if (!resO && !resI)
-                            {
-                                if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
-                                {
-                                    isDup = true;
-
-                                    if (turn)
-                                        printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
-                                    printf("%s\n", travIn->path);
-                                    ++duplicates;
-                                    dupsSize += travIn->file_size;
-
-                                    // Removing duplicate file
-                                    temp->next = travIn->next;
-                                    free(travIn);
-                                    travIn = temp->next;
-                                    turn = 0;
-                                    continue;
-                                }
+                                return false;
                             }
                         }
                     }
@@ -353,28 +371,35 @@ void check(void)
                 travOut = travOut->next;
             }
 
-            // Unloading
-
-            // Pointer to trav linked lists in hashtable
-            node* trav = NULL;
-
-            // Pointer to hold the node to be freed
-            node* temp = NULL;  
-
-            trav = hashtable[i];
-            while(trav)
-            {
-                temp = trav;
-                trav = trav->next;
-                free(temp->file_hash);
-                free(temp);
-            }
-            hashtable[i] = NULL;
-
             if (isDup)
                 ++sets;
         }
     }
+    return true;
+}
+
+bool unload(void)
+{
+    // Pointer to trav linked lists in hashtable
+    node* trav = NULL;
+
+    // Pointer to hold the node to be freed
+    node* temp = NULL;  
+
+    for (int i = 0; i < N; ++i)
+    {   
+        trav = hashtable[i];
+        while(trav)
+        {
+            temp = trav;
+            trav = trav->next;
+            free(temp->file_hash);
+            free(temp);
+        }
+        hashtable[i] = NULL;
+    }
+
+    return true;
 }
 
 // Returns total no of duplicates
@@ -413,7 +438,6 @@ void benchmarks(void)
 {
     printf("\n No of sets duplicates are distributed: %u\n", sets);
     printf("\n No of size mathced: %u\n", size_matched);
-    printf("\n Time taken by search(): %lf\n", time_search);
     printf("\n Time taken by sha256_file(): %lf\n", time_sha256);
     printf("\n No of calls to sha256_file(): %u\n", sha256_calls);
     printf("\n Total bytes read by sha256_file(): %ld\n", dataRead);
