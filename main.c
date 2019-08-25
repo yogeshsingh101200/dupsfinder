@@ -43,8 +43,7 @@ int main(int argc, char* argv[])
     unload();
     
     // Stats
-    printf("\n\n Total no of duplicates: %u", getDuplicates());
-    totalSize();
+    stats();
 
     return 0;
 }

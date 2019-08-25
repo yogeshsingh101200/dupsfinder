@@ -26,10 +26,7 @@ bool check(void);
 // Function to unload files from memory
 bool unload(void);
 
-// Returns total no of duplicates
-unsigned int getDuplicates();
-
-// Returns total size taken by duplicate files
-void totalSize(void);
+// Gives stats like total duplicates found and size taken by them
+void stats(void);
 
 #endif

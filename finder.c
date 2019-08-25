@@ -18,8 +18,8 @@ typedef struct node
 {
     long file_size;
     char path[MAX_PATH];
-    unsigned long long xxhash;
-    char* file_hash;
+    unsigned long long *xxhash;
+    unsigned char *file_hash;
     struct node* next;
 } node;
 
@@ -44,7 +44,7 @@ long dupsSize = 0;
 // Calculates sha256 hash of a file
 //https://www.openssl.org/docs/manmaster/man3/SHA1.html
 //https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
-int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
+int sha256_file(char *path, unsigned char *hash)
 {
     // Opens file from given path
     FILE *file = fopen(path, "rb");
@@ -53,9 +53,6 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
         fprintf(stderr, "Unable to open file %s\n", path);
         return ENOENT;
     }
-
-    // To store digest
-    unsigned char hash[SHA256_DIGEST_LENGTH];
     
     // Intializes sha256 context structure
     SHA256_CTX sha256;
@@ -77,13 +74,6 @@ int sha256_file(char *path, char outputBuffer[HASH_LENGTH + 1])
 
     // Places message digest to hash
     SHA256_Final(hash, &sha256);
-
-    // Store message digest in lowercase hexadecimal to outputbuffer
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-    {
-        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
-    }
-    outputBuffer[HASH_LENGTH] = '\0';
 
     // Closes file
     fclose(file);
@@ -159,7 +149,7 @@ bool load(const char *path, long size)
     // Storing file info
     file->file_size = size;
     strcpy(file->path, path);
-    file->xxhash = 0;
+    file->xxhash = NULL;
     file->file_hash = NULL;
 
     // Index in hashtable
@@ -173,31 +163,43 @@ bool load(const char *path, long size)
     return true;
 }
 
-bool compxxhash(node *travOut, node *travIn)
+int compxxhash(node *travOut, node *travIn)
 {
     int resO = 0, resI = 0;
     
     // Calculates hash of parent file only if does not exist
     if (!travOut->xxhash)
     {
-        resO = xxhash_file(travOut->path, &travOut->xxhash);
+        travOut->xxhash = malloc(sizeof(unsigned long long));
+        if (!travOut->xxhash)
+        {
+            fprintf(stderr, "Not enough memory!\n");
+            return ENOMEM;    
+        }
+        resO = xxhash_file(travOut->path, travOut->xxhash);
     }
 
     // Calculates hash of child file only if does not exist
     if (!travIn->xxhash)
     {
-        resI = xxhash_file(travIn->path, &travIn->xxhash);  
+        travIn->xxhash = malloc(sizeof(unsigned long long));
+        if (!travIn->xxhash)
+        {
+            fprintf(stderr, "Not enough memory!\n");
+            return ENOMEM;    
+        }
+        resI = xxhash_file(travIn->path, travIn->xxhash);  
     }
 
     // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
     if (!resO && !resI)
     {
-        if (travOut->xxhash == travIn->xxhash)
+        if (*travOut->xxhash == *travIn->xxhash)
         {
-            return true;
+            return 0;
         }
     }
-    return false;
+    return -1;
 }
 
 int compsha256(node * travOut, node *travIn)
@@ -207,7 +209,7 @@ int compsha256(node * travOut, node *travIn)
     // Calculates hash of parent file only if does not exist
     if (!travOut->file_hash)
     {
-        travOut->file_hash = malloc(HASH_LENGTH + 1);
+        travOut->file_hash = malloc(SHA256_DIGEST_LENGTH);
         if (!travOut->file_hash)
         {
             fprintf(stderr, "Not enough memory!\n");
@@ -221,7 +223,7 @@ int compsha256(node * travOut, node *travIn)
     // Calculates hash of child file only if does not exist
     if (!travIn->file_hash)
     {
-        travIn->file_hash = malloc(HASH_LENGTH + 1);
+        travIn->file_hash = malloc(SHA256_DIGEST_LENGTH);
         if (!travIn->file_hash)
         {
             fprintf(stderr, "Not enough memory!\n");
@@ -235,10 +237,8 @@ int compsha256(node * travOut, node *travIn)
     // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
     if (!resO && !resI)
     {
-        if (strcmp(travIn->file_hash, travOut->file_hash) == 0)
-        {
+        if (memcmp(travIn->file_hash, travOut->file_hash, SHA256_DIGEST_LENGTH) == 0)
             return 0;
-        }
     }
     return -1;
 }
@@ -281,7 +281,7 @@ bool check(void)
                     // Groups files on the basis of file size
                     if (travOut->file_size == travIn->file_size)
                     {
-                        if (compxxhash(travOut, travIn))
+                        if ((result = compxxhash(travOut, travIn)) == 0)
                         {
                             if ((result = compsha256(travOut, travIn)) == 0)
                             {
@@ -302,6 +302,10 @@ bool check(void)
                             {
                                 return false;
                             }
+                        }
+                        else if (result == ENOMEM)
+                        {
+                            return false;
                         }
                     }
 
@@ -333,7 +337,6 @@ bool unload(void)
         {
             temp = trav;
             trav = trav->next;
-            free(temp->file_hash);
             free(temp);
         }
         hashtable[i] = NULL;
@@ -342,15 +345,12 @@ bool unload(void)
     return true;
 }
 
-// Returns total no of duplicates
-unsigned int getDuplicates(void)
+void stats(void)
 {
-    return duplicates;
-}
-
-// Returns total size taken by duplicates
-void totalSize(void)
-{
+    // Total no of duplicates
+    printf("\n\n Total no of duplicates: %u", duplicates);
+    
+    // Total size calculations
     const unsigned int KB = 1024;
     const unsigned int MB = 1024 * 1024;
     const unsigned int GB = 1024 * 1024 * 1024;
