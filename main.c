@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
     // Stats
     stats();
 
+    // File Deletion
     if (argc == 3 && strcmp(argv[2], "delete") == 0)
     {
         char choice;
@@ -63,6 +64,9 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Unable to read your input!\n");   
         }
     }
+
+    // Empties stack
+    empty();
 
     // Unloads files from memory
     unload();

@@ -58,3 +58,11 @@ void deleteAll(void)
     top = NULL;
     printf("\n\nDeleted all duplicate files!\n\n");
 }
+
+void empty(void)
+{
+    while(top)
+    {
+        pop();
+    }
+}
