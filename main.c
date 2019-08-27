@@ -4,13 +4,14 @@
 #include <string.h>
 
 #include "finder.h"
+#include "stack.h"
 
 int main(int argc, char* argv[])
 {
     // Checks for correct usage
-    if (argc != 2)
+    if (argc < 2)
     {
-        fprintf(stderr, "Usage: main <directory>\n");
+        fprintf(stderr, "Usage: main <directory> <delete>(optional)\n");
         return -1;
     }
     
@@ -38,12 +39,33 @@ int main(int argc, char* argv[])
 
         exit(-1);
     }
+    
+    // Prints all duplicates
+    print();
+
+    // Stats
+    stats();
+
+    if (argc == 3 && strcmp(argv[2], "delete") == 0)
+    {
+        char choice;
+        printf("\n\n!! This action is irreversible !!\n\n");
+        printf("Do you really want to delete all duplicate files(Y/n)?\n");
+        if (scanf("%c", &choice))
+        {
+            if (choice == 'Y')
+                deleteAll();
+            else
+                printf("\n Cancelled deletion!\n");
+        }
+        else
+        {
+            fprintf(stderr, "Unable to read your input!\n");   
+        }
+    }
 
     // Unloads files from memory
     unload();
-    
-    // Stats
-    stats();
 
     return 0;
 }

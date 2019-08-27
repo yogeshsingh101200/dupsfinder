@@ -8,8 +8,21 @@
 // Maximum path length
 #define MAX_PATH 260
 
-// Hash length
-#define HASH_LENGTH 64
+// No of buckets in hashtable
+#define N 65535
+
+// Structure of a node in hashtable
+typedef struct node
+{
+    long file_size;
+    char path[MAX_PATH];
+    unsigned long long *xxhash;
+    unsigned char *file_hash;
+    struct node* next;
+} node;
+
+// Hashtable to store directory's entries
+node* hashtable[N];
 
 // Initializes hashtable buckets
 void initialize(void);

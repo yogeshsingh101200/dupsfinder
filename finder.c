@@ -8,23 +8,8 @@
 #include <openssl/sha.h>
 
 #include "finder.h"
+#include "stack.h"
 #include "xxhash.h"
-
-// No of buckets in hashtable
-#define N 65535
-
-// Structure of a node in hashtable
-typedef struct node
-{
-    long file_size;
-    char path[MAX_PATH];
-    unsigned long long *xxhash;
-    unsigned char *file_hash;
-    struct node* next;
-} node;
-
-// Hashtable to store directory's entries
-node* hashtable[N];
 
 // Intializes hashtable
 void initialize(void)
@@ -97,13 +82,16 @@ int xxhash_file(char *path, unsigned long long *hash)
     }
 
     const int bufSize = 2048;
-    unsigned char buffer[bufSize];
+    unsigned char *buffer = malloc(bufSize);
     int bytesRead = fread(buffer, 1, bufSize, file);
     unsigned long long const seed = 0;
     *hash = XXH64(buffer, bytesRead, seed);
 
     // Closes file
     fclose(file);
+
+    // Free memory
+    free(buffer);
 
     // Indicates success
     return 0;
@@ -237,7 +225,7 @@ int compsha256(node * travOut, node *travIn)
     // Comparing the two files, if there hashes are computed, on the basis of sha256 hash 
     if (!resO && !resI)
     {
-        if (memcmp(travIn->file_hash, travOut->file_hash, SHA256_DIGEST_LENGTH) == 0)
+        if (memcmp(travOut->file_hash, travIn->file_hash, SHA256_DIGEST_LENGTH) == 0)
             return 0;
     }
     return -1;
@@ -245,14 +233,8 @@ int compsha256(node * travOut, node *travIn)
 
 bool check(void)
 {
-    // Pointer to traverse through the linked list
-    node *travOut = NULL;
-    
-    // Pointer to traverse through linked list while comparing to the node pointed by travOut
-    node *travIn = NULL;
-    
-    // Pointer to hold the previous node in the linked list
-    node *temp = NULL;
+    // Pointers to traverse through the linked list
+    node *travOut = NULL, *travIn = NULL;
 
     int result = -1;
 
@@ -266,11 +248,7 @@ bool check(void)
             // Till the end of linked list
             while(travOut)
             {
-                // turn is to print 'duplicate of' only 1 time
-                int turn = 1;
-
-                // To hold the previous node
-                temp = travOut;
+                bool isDup = false;
 
                 // To traverse remaining nodes in linked list
                 travIn = travOut->next;
@@ -279,24 +257,19 @@ bool check(void)
                 while(travIn)
                 {
                     // Groups files on the basis of file size
-                    if (travOut->file_size == travIn->file_size)
+                    if (travOut->file_size == travIn->file_size && travOut->file_size != -1 && travIn->file_size != -1)
                     {
                         if ((result = compxxhash(travOut, travIn)) == 0)
                         {
                             if ((result = compsha256(travOut, travIn)) == 0)
                             {
-                                if (turn)
-                                    printf("\n\nDuplicate(s) of %s is at:\n", travOut->path);
-                                printf("%s\n", travIn->path);
+                                isDup = true;
+                                push(travIn, false);
                                 ++duplicates;
                                 dupsSize += travIn->file_size;
 
-                                // Removing duplicate file
-                                temp->next = travIn->next;
-                                free(travIn);
-                                travIn = temp->next;
-                                turn = 0;
-                                continue;
+                                // Removing duplicate file from comparison
+                                travIn->file_size = -1;
                             }
                             else if (result == ENOMEM)
                             {
@@ -310,10 +283,12 @@ bool check(void)
                     }
 
                     // Moves to next node on list
-                    temp = travIn;
-                    travIn = temp->next;
+                    travIn = travIn->next;
                 }
                 
+                if (isDup)
+                    push(travOut, true);
+
                 // Moves to next node
                 travOut = travOut->next;
             }
