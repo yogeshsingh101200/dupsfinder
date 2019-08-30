@@ -42,23 +42,6 @@ void print(void)
     }
 }
 
-void deleteAll(void)
-{
-    stack *trav = NULL, *temp = NULL;
-    trav = top;
-    while(trav)
-    {
-        temp = trav;
-        trav = trav->next;
-        if (!temp->isParent)
-            if (!remove(temp->file->path))
-                fprintf(stderr, "Unable to remove file %s\n", temp->file->path);
-        pop();
-    }
-    top = NULL;
-    printf("\n\nDeleted all duplicate files!\n\n");
-}
-
 void empty(void)
 {
     while(top)

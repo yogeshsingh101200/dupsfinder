@@ -36,6 +36,9 @@ bool load(const char*, long);
 // Function to find duplicates
 bool check(void);
 
+// Deletes all duplicate files
+void deleteAll(void);
+
 // Function to unload files from memory
 bool unload(void);
 

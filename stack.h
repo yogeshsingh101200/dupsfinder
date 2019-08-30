@@ -17,7 +17,6 @@ stack *top;
 int push(node*, bool);
 void pop(void);
 void print(void);
-void deleteAll(void);
 void empty(void);
 
 #endif

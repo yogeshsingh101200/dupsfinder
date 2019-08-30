@@ -26,6 +26,15 @@ unsigned int duplicates = 0;
 // Tracks total size taken by duplicates
 long dupsSize = 0;
 
+// Total no of files
+unsigned int no_of_files = 0;
+
+void progress(unsigned int processed_files)
+{
+    printf("\r[%u/%u] files checked ||  \b[%u/%u] duplicates found.", processed_files, no_of_files, duplicates, processed_files);
+    fflush(stdout);
+}
+
 // Calculates sha256 hash of a file
 //https://www.openssl.org/docs/manmaster/man3/SHA1.html
 //https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
@@ -101,6 +110,7 @@ int fileTree(const char *fpath, const struct stat *sb, int typeflag)
 {
     if (typeflag == FTW_F)
     {
+        ++no_of_files;
         if (!load(fpath, sb->st_size))
         {
             fprintf(stderr, "Unable to load file at %s\n", fpath);
@@ -238,6 +248,8 @@ bool check(void)
 
     int result = -1;
 
+    unsigned int processed_files = 0;
+
     for (int i = 0; i < N; ++i)
     {
         if (hashtable[i])
@@ -248,6 +260,8 @@ bool check(void)
             // Till the end of linked list
             while(travOut)
             {
+                progress(++processed_files);
+
                 bool isDup = false;
 
                 // To traverse remaining nodes in linked list
@@ -295,6 +309,26 @@ bool check(void)
         }
     }
     return true;
+}
+
+void deleteAll(void)
+{
+    stack *trav = NULL, *temp = NULL;
+    trav = top;
+    while(trav)
+    {
+        temp = trav;
+        trav = trav->next;
+        if (!temp->isParent)
+            if (remove(temp->file->path) == -1)
+            {
+                fprintf(stderr, "\nUnable to remove file %s\n", temp->file->path);
+                fprintf(stderr, "Error: %s\n", strerror(errno));
+            }
+        pop();
+    }
+    top = NULL;
+    printf("\n\nDeleted all duplicate files!\n\n");
 }
 
 bool unload(void)
