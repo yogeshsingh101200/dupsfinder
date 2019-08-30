@@ -30,9 +30,6 @@ void initialize(void);
 // Function to search directory for files
 bool search(const char*);                    
 
-// Function to load files in memory
-bool load(const char*, long);
-
 // Function to find duplicates
 bool check(void);
 

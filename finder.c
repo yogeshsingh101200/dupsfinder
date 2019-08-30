@@ -1,15 +1,15 @@
 #include <ftw.h>
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <openssl/sha.h>
 
 #include "finder.h"
+#include "hashes.h"
 #include "stack.h"
-#include "xxhash.h"
 
 // Intializes hashtable
 void initialize(void)
@@ -29,84 +29,40 @@ long dupsSize = 0;
 // Total no of files
 unsigned int no_of_files = 0;
 
-void progress(unsigned int processed_files)
+static inline void progress(unsigned int processed_files)
 {
     printf("\r[%u/%u] files checked ||  \b[%u/%u] duplicates found.", processed_files, no_of_files, duplicates, processed_files);
     fflush(stdout);
 }
 
-// Calculates sha256 hash of a file
-//https://www.openssl.org/docs/manmaster/man3/SHA1.html
-//https://stackoverflow.com/questions/2262386/generate-sha256-with-openssl-and-c
-int sha256_file(char *path, unsigned char *hash)
+static bool load(const char *path, long size)
 {
-    // Opens file from given path
-    FILE *file = fopen(path, "rb");
+    // Allocating memory to store file info
+    node* file = malloc(sizeof(node));
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s\n", path);
-        return ENOENT;
-    }
-    
-    // Intializes sha256 context structure
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-
-    // To read chunks of data repeatedly and feed them to sha256 update to hash
-    const int bufSize = 256 * 1024;
-    unsigned char *buffer = malloc(bufSize);
-    int bytesRead = 0;
-    if (!buffer)
-    {
-        fprintf(stderr, "Out of memory!\n");
-        return ENOMEM;
-    }
-    while ((bytesRead = fread(buffer, 1, bufSize, file)))
-    {
-        SHA256_Update(&sha256, buffer, bytesRead);
+        fprintf(stderr, "Not enough memory to load file!\n");
+        return false;
     }
 
-    // Places message digest to hash
-    SHA256_Final(hash, &sha256);
+    // Storing file info
+    file->file_size = size;
+    strcpy(file->path, path);
+    file->xxhash = NULL;
+    file->file_hash = NULL;
 
-    // Closes file
-    fclose(file);
+    // Index in hashtable
+    unsigned int index = file->file_size % N;
 
-    // Free memory
-    free(buffer);
+    // File insertion
+    file->next = hashtable[index];
+    hashtable[index] = file;
 
-    // Indicates success
-    return 0;
+    // Success
+    return true;
 }
 
-// Calculates xxhash of a file
-int xxhash_file(char *path, unsigned long long *hash)
-{    
-    // Opens file from given path
-    FILE *file = fopen(path, "rb");
-    if (!file)
-    {
-        fprintf(stderr, "Unable to open file %s\n", path);
-        return -1;
-    }
-
-    const int bufSize = 2048;
-    unsigned char *buffer = malloc(bufSize);
-    int bytesRead = fread(buffer, 1, bufSize, file);
-    unsigned long long const seed = 0;
-    *hash = XXH64(buffer, bytesRead, seed);
-
-    // Closes file
-    fclose(file);
-
-    // Free memory
-    free(buffer);
-
-    // Indicates success
-    return 0;
-}
-
-int fileTree(const char *fpath, const struct stat *sb, int typeflag)
+static int fileTree(const char *fpath, const struct stat *sb, int typeflag)
 {
     if (typeflag == FTW_F)
     {
@@ -134,34 +90,7 @@ bool search(const char* dirpath)
     return true;
 }
 
-bool load(const char *path, long size)
-{
-    // Allocating memory to store file info
-    node* file = malloc(sizeof(node));
-    if (!file)
-    {
-        fprintf(stderr, "Not enough memory to load file!\n");
-        return false;
-    }
-
-    // Storing file info
-    file->file_size = size;
-    strcpy(file->path, path);
-    file->xxhash = NULL;
-    file->file_hash = NULL;
-
-    // Index in hashtable
-    unsigned int index = file->file_size % N;
-
-    // File insertion
-    file->next = hashtable[index];
-    hashtable[index] = file;
-
-    // Success
-    return true;
-}
-
-int compxxhash(node *travOut, node *travIn)
+static int compxxhash(node *travOut, node *travIn)
 {
     int resO = 0, resI = 0;
     
@@ -200,7 +129,7 @@ int compxxhash(node *travOut, node *travIn)
     return -1;
 }
 
-int compsha256(node * travOut, node *travIn)
+static int compsha256(node * travOut, node *travIn)
 {
     int resO = 0, resI = 0; 
 

@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O2
 LIBS = -lcrypto
 TARGET = dupsfinder
-SRCS = main.c finder.c xxhash.c stack.c
+SRCS = main.c finder.c hashes.c xxhash.c stack.c
 OBJS = $(SRCS:.c=.o)
 
 $(TARGET): $(OBJS)
