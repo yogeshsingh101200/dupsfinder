@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     // Checks for correct usage
     if (argc < 2)
     {
-        fprintf(stderr, "Usage: main <directory> <delete>(optional)\n");
+        fprintf(stderr, "Usage: ./dupsfinder <directory> <delete>(optional)\n");
         return -1;
     }
     
