@@ -47,7 +47,7 @@ Dupsfinder is a duplicate file finder program which can search recursively throu
 
 # Algorithm
 1. Loads files into hashtable on the basis of their sizes.
-2. Compare every file to every other files on a single bucket list list at a time as follows
+2. Compare every file to every other file on a single bucket list at a time as follows
    - Compare their sizes
    - If matched, compare their xxhash
    - If matched, compare their sha256 hash
