@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     stats();
 
     // File Deletion
-    if (argc == 3 && strcmp(argv[2], "delete") == 0)
+    if (argc == 3 && strcmp(argv[2], "delete") == 0 && getDuplicates() != 0)
     {
         char choice;
         printf("\n\n!! This action is irreversible !!\n\n");

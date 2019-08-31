@@ -11,7 +11,6 @@
 #include "hashes.h"
 #include "stack.h"
 
-// Intializes hashtable
 void initialize(void)
 {
     for (int i = 0; i < N; ++i)
@@ -281,6 +280,11 @@ bool unload(void)
     }
 
     return true;
+}
+
+unsigned int getDuplicates(void)
+{
+    return duplicates;
 }
 
 void stats(void)

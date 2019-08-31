@@ -39,6 +39,9 @@ void deleteAll(void);
 // Function to unload files from memory
 bool unload(void);
 
+// Return total no of duplicates
+unsigned int getDuplicates();
+
 // Gives stats like total duplicates found and size taken by them
 void stats(void);
 
