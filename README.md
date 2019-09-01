@@ -2,7 +2,8 @@
 Dupsfinder is a duplicate file finder program which can search recursively through directories, disk drives and any other storage devices.
 
 # Usage
-./dupsfinder \<directory> delete(optional)
+- ** To compile: ** make dupsfinder
+- ** To execute: ** ./dupsfinder \<directory> delete(optional)
 
 # Benchmarks:
 ## Test system specs:
@@ -47,11 +48,11 @@ Dupsfinder is a duplicate file finder program which can search recursively throu
 
 # Algorithm
 1. Loads files into hashtable on the basis of their sizes.
-2. Compare every file to every other file on a single bucket list at a time as follows
-   - Compare their sizes
-   - If matched, compare their xxhash
-   - If matched, compare their sha256 hash
-   - If mathced, psuh duplicate files to stack
+2. Compare every file to every other file on a same bucket at a time as follows
+   - Compare their sizes.
+   - If matched, compare their xxhash of first 2KB.
+   - If matched, compare their sha256 hash.
+   - If matched, push duplicate files to stack.
 3. Print duplicate files by traversing stack.
 4. If delete flag is used then pop files from stack and also delete them but leaving parent files.
 5. Before exiting free all sorts of allocated memory.
