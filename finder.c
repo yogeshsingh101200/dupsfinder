@@ -1,3 +1,6 @@
+// POSIX.1-2008 + XSI, i.e. SuSv4, features
+#define _XOPEN_SOURCE 700
+
 #include <ftw.h>
 #include <stdio.h>
 #include <errno.h>
@@ -61,7 +64,7 @@ static bool load(const char *path, off_t size)
     return true;
 }
 
-static int fileTree(const char *fpath, const struct stat *sb, int typeflag)
+static int fileTree(const char *fpath, const struct stat *sb, int typeflag, struct FTW *fileinfo)
 {
     if (typeflag == FTW_F)
     {
@@ -81,7 +84,8 @@ static int fileTree(const char *fpath, const struct stat *sb, int typeflag)
 
 bool search(const char* dirpath)
 {
-    if (ftw(dirpath, fileTree, FOPEN_MAX))
+    // Do not follows symbolick link
+    if (nftw(dirpath, fileTree, FOPEN_MAX, FTW_PHYS))
     {
         fprintf(stderr, "Unable to traverse file tree\n");
         return false;
