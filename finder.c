@@ -23,7 +23,7 @@ void initialize(void)
 unsigned int duplicates = 0;
 
 // Tracks total size taken by duplicates
-long dupsSize = 0;
+off_t dupsSize = 0;
 
 // Total no of files
 unsigned int no_of_files = 0;
@@ -34,7 +34,7 @@ static inline void progress(unsigned int processed_files)
     fflush(stdout);
 }
 
-static bool load(const char *path, long size)
+static bool load(const char *path, off_t size)
 {
     // Allocating memory to store file info
     node* file = malloc(sizeof(node));

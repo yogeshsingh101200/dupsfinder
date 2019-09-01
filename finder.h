@@ -14,7 +14,7 @@
 // Structure of a node in hashtable
 typedef struct node
 {
-    long file_size;
+    off_t file_size;
     char path[MAX_PATH];
     unsigned long long *xxhash;
     unsigned char *file_hash;
@@ -40,7 +40,7 @@ void deleteAll(void);
 bool unload(void);
 
 // Return total no of duplicates
-unsigned int getDuplicates();
+unsigned int getDuplicates(void);
 
 // Gives stats like total duplicates found and size taken by them
 void stats(void);
