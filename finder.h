@@ -5,9 +5,6 @@
 
 #include <stdbool.h>
 
-// Maximum path length
-#define MAX_PATH 260
-
 // No of buckets in hashtable
 #define N 65535
 
