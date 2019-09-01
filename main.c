@@ -2,6 +2,7 @@
 #define _XOPEN_SOURCE 700
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -9,32 +10,63 @@
 #include "finder.h"
 #include "stack.h"
 
+void help(void);
+
 int main(int argc, char* argv[])
 {
     // Checks for correct usage
     if (argc < 2)
     {
-        fprintf(stderr, "Usage: ./dupsfinder <directory> <delete>(optional)\n");
+        help();
+        return -1;
+    }
+
+    // Flag to know whether to delete files or not
+    bool isDelete = false;
+
+    // Parses arguments and form corresponding options
+    int opt;
+    while ((opt = getopt(argc, argv, "dh")) != -1)
+    {
+        switch (opt)
+        {
+            case 'd': isDelete = true;
+                break;        
+            case 'h': help();
+                break;
+            default: help();
+                break;
+        }
+    }
+
+    // Checks whether list of directories supplied or not
+    if (!argv[optind])
+    {
+        fprintf(stderr, "\n No directories specified!\n");
+        help();
         return -1;
     }
     
-    // Stores directory path
-    char *directory = strdup(argv[1]);
-
     // Initializes hash table
     initialize();
 
-    // Searches directories for file and then loads them to memory    
-    if (search(directory) == false)
+    for (int i = optind; i < argc; ++i)
     {
-        // Clears before exiting
-        unload();
+        // Stores directory path
+        char *directory = strdup(argv[i]);
 
-        exit(-1);
-    }      
-    
-    // Frees memory
-    free(directory);
+        // Searches directories for file and then loads them to memory    
+        if (search(directory) == false)
+        {
+            // Clears before exiting
+            unload();
+
+            exit(-1);
+        }      
+        
+        // Frees memory
+        free(directory);
+    }
 
     // Checks and returns duplicate files
     if (check() == false)
@@ -52,7 +84,7 @@ int main(int argc, char* argv[])
     stats();
 
     // File Deletion
-    if (argc == 3 && strcmp(argv[2], "delete") == 0 && getDuplicates() != 0)
+    if (isDelete == true && getDuplicates() != 0)
     {
         char choice;
         printf("\n\n!! This action is irreversible !!\n\n");
@@ -77,4 +109,12 @@ int main(int argc, char* argv[])
     unload();
 
     return 0;
+}
+
+void help(void)
+{
+    printf("\n Usage: ./dupsfinder <directory list> <options>\n");
+    printf("\n Options:\n\n");
+    printf("\t -h : to print this help guide\n");
+    printf("\t -d : delete the duplicate files retaining the first one in group\n\n");
 }
