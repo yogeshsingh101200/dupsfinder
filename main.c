@@ -116,5 +116,5 @@ void help(void)
     printf("\n Usage: ./dupsfinder <directory list> <options>\n");
     printf("\n Options:\n\n");
     printf("\t -h : to print this help guide\n");
-    printf("\t -d : delete the duplicate files retaining the first one in group\n\n");
+    printf("\t -d : delete the duplicate files, retaining the first one in each group\n\n");
 }

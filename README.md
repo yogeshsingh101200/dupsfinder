@@ -3,7 +3,9 @@ Dupsfinder is a duplicate file finder program which can search recursively throu
 
 # Usage
 - ** To compile: ** make dupsfinder
-- ** To execute: ** ./dupsfinder \<directory> delete(optional)
+- ** To execute: ** ./dupsfinder \<directory list> <options>
+- -h : to get help guide.
+- -d : to delete the duplicate files and retains the first file of each group.
 
 # Benchmarks:
 ## Test system specs:
