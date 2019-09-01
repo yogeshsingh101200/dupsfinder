@@ -46,7 +46,7 @@ static bool load(const char *path, off_t size)
 
     // Storing file info
     file->file_size = size;
-    strcpy(file->path, path);
+    file->path = strdup(path);
     file->xxhash = NULL;
     file->file_hash = NULL;
 
@@ -274,6 +274,9 @@ bool unload(void)
         {
             temp = trav;
             trav = trav->next;
+            free(temp->file_hash);
+            free(temp->path);
+            free(temp->xxhash);
             free(temp);
         }
         hashtable[i] = NULL;

@@ -15,7 +15,7 @@
 typedef struct node
 {
     off_t file_size;
-    char path[MAX_PATH];
+    char* path;
     unsigned long long *xxhash;
     unsigned char *file_hash;
     struct node* next;

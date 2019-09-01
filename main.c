@@ -1,3 +1,6 @@
+// POSIX.1-2008 + XSI, i.e. SuSv4, features
+#define _XOPEN_SOURCE 700
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -16,8 +19,7 @@ int main(int argc, char* argv[])
     }
     
     // Stores directory path
-    char directory[MAX_PATH];
-    strcpy(directory, argv[1]);
+    char *directory = strdup(argv[1]);
 
     // Initializes hash table
     initialize();
@@ -31,6 +33,9 @@ int main(int argc, char* argv[])
         exit(-1);
     }      
     
+    // Frees memory
+    free(directory);
+
     // Checks and returns duplicate files
     if (check() == false)
     {
