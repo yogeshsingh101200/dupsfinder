@@ -14,6 +14,22 @@
 #include "hashes.h"
 #include "stack.h"
 
+// No of buckets in hashtable
+#define N 65535
+
+// Structure of a node in hashtable
+typedef struct node
+{
+    off_t file_size;
+    char* path;
+    unsigned long long *xxhash;
+    unsigned char *file_hash;
+    struct node* next;
+} node;
+
+// Hashtable to store directory's entries
+node* hashtable[N];
+
 void initialize(void)
 {
     for (int i = 0; i < N; ++i)
