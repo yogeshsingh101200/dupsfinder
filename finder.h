@@ -5,6 +5,16 @@
 
 #include <stdbool.h>
 
+// Structure of a node in hashtable
+typedef struct node
+{
+    off_t file_size;
+    char* path;
+    unsigned long long *xxhash;
+    unsigned char *file_hash;
+    struct node* next;
+} node;
+
 // Initializes hashtable buckets
 void initialize(void);
 
