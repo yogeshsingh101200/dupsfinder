@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
 
     // Parses arguments and form corresponding options
     int opt;
+    bool called = false; // To avoid multiple calls to help()
     while ((opt = getopt(argc, argv, "dh")) != -1)
     {
         switch (opt)
@@ -33,8 +34,9 @@ int main(int argc, char* argv[])
             case 'd': isDelete = true;
                 break;        
             case 'h': help();
-                break;
+                return 0;
             default: help();
+                called = true;
                 break;
         }
     }
@@ -43,7 +45,7 @@ int main(int argc, char* argv[])
     if (!argv[optind])
     {
         fprintf(stderr, "\n No directories specified!\n");
-        help();
+        if (!called) help();
         return -1;
     }
     
